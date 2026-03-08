@@ -177,7 +177,7 @@ export default function App() {
                 <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>Want to earn more in fewer hours?</div>
                 <div style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>Get 100 AI prompts built for freelancers. Save 10+ hours every week.</div>
               </div>
-              <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: 8,
+              <a href="href=https://kovacreations.gumroad.com/l/wxkqcf  style={{ display: "inline-flex", alignItems: "center", gap: 8,
                 background: "linear-gradient(135deg, #7c3aed, #06b6d4)", color: "#fff", padding: "12px 24px",
                 borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>
                 Get the Prompt Guide
