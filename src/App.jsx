@@ -6,30 +6,90 @@ const formatCurrency = (n) => {
   return "$" + n.toFixed(2);
 };
 
-const Slider = ({ label, value, onChange, min, max, step = 1, prefix = "", suffix = "", help }) => (
-  <div style={{ marginBottom: 28 }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: "#b0b0c0", letterSpacing: 0.5 }}>{label}</label>
-      <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -1 }}>
-        {prefix}{typeof value === "number" ? value.toLocaleString() : value}{suffix}
-      </span>
+const Slider = ({ label, value, onChange, min, max, step = 1, prefix = "", suffix = "", help, inputMin }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const actualMin = inputMin !== undefined ? inputMin : min;
+
+  const startEdit = () => {
+    setDraft(String(value));
+    setEditing(true);
+  };
+
+  const commitEdit = () => {
+    setEditing(false);
+    const parsed = parseFloat(draft.replace(/[^0-9.]/g, ""));
+    if (!isNaN(parsed)) {
+      onChange(Math.max(actualMin, Math.min(max, parsed)));
+    }
+  };
+
+  const handleKey = (e) => {
+    if (e.key === "Enter") commitEdit();
+    if (e.key === "Escape") setEditing(false);
+  };
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+        <label style={{ fontSize: 13, fontWeight: 600, color: "#b0b0c0", letterSpacing: 0.5 }}>{label}</label>
+        {editing ? (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+            {prefix && <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{prefix}</span>}
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={handleKey}
+              style={{
+                background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.4)",
+                borderRadius: 8, padding: "4px 8px", color: "#fff", fontSize: 20, fontWeight: 800,
+                width: 110, textAlign: "right", outline: "none", fontFamily: "inherit",
+              }}
+            />
+            {suffix && <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{suffix}</span>}
+          </div>
+        ) : (
+          <span
+            onClick={startEdit}
+            title="Click to type a custom value"
+            style={{
+              fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -1,
+              cursor: "text", borderBottom: "1px dashed rgba(255,255,255,0.2)",
+              paddingBottom: 2, transition: "border-color 0.2s",
+            }}
+          >
+            {prefix}{typeof value === "number" ? value.toLocaleString() : value}{suffix}
+          </span>
+        )}
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={Math.max(min, Math.min(max, value))}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{
+          width: "100%", height: 6, borderRadius: 3, appearance: "none", outline: "none",
+          background: `linear-gradient(to right, #7c3aed 0%, #06b6d4 ${((Math.max(min, Math.min(max, value)) - min) / (max - min)) * 100}%, #1e1e3a ${((Math.max(min, Math.min(max, value)) - min) / (max - min)) * 100}%, #1e1e3a 100%)`,
+          cursor: "pointer",
+        }}
+      />
+      {help && <div style={{ fontSize: 11, color: "#666", marginTop: 6 }}>{help}</div>}
     </div>
-    <input type="range" min={min} max={max} step={step} value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      style={{ width: "100%", height: 6, borderRadius: 3, appearance: "none", outline: "none",
-        background: `linear-gradient(to right, #7c3aed 0%, #06b6d4 ${((value - min) / (max - min)) * 100}%, #1e1e3a ${((value - min) / (max - min)) * 100}%, #1e1e3a 100%)`,
-        cursor: "pointer" }} />
-    {help && <div style={{ fontSize: 11, color: "#666", marginTop: 6 }}>{help}</div>}
-  </div>
-);
+  );
+};
 
 const ResultCard = ({ label, value, sub, accent }) => (
-  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 16, padding: "24px 20px", textAlign: "center", flex: "1 1 140px", minWidth: 140 }}>
+  <div style={{
+    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 16, padding: "24px 20px", textAlign: "center",
+    flex: "1 1 140px", minWidth: 140,
+  }}>
     <div style={{ fontSize: 11, fontWeight: 700, color: "#777", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>{label}</div>
-    <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -2, lineHeight: 1,
+    <div style={{
+      fontSize: 28, fontWeight: 900, letterSpacing: -2, lineHeight: 1,
       background: accent || "linear-gradient(135deg, #7c3aed, #06b6d4)",
-      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{value}</div>
+      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+    }}>{value}</div>
     {sub && <div style={{ fontSize: 11, color: "#555", marginTop: 6 }}>{sub}</div>}
   </div>
 );
@@ -61,19 +121,34 @@ export default function App() {
   }, [income, expenses, vacation, billable, hoursPerWeek]);
 
   const TabBtn = ({ id, label }) => (
-    <button onClick={() => setTab(id)} style={{ padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer",
-      fontSize: 13, fontWeight: 700, background: tab === id ? "rgba(124,58,237,0.2)" : "transparent",
-      color: tab === id ? "#c4b5fd" : "#555", transition: "all 0.2s" }}>{label}</button>
+    <button onClick={() => setTab(id)} style={{
+      padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer",
+      fontSize: 13, fontWeight: 700,
+      background: tab === id ? "rgba(124,58,237,0.2)" : "transparent",
+      color: tab === id ? "#c4b5fd" : "#555", transition: "all 0.2s",
+    }}>{label}</button>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a1a", color: "#fff",
-      fontFamily: "'Inter',-apple-system,sans-serif", display: "flex", justifyContent: "center", padding: "40px 20px" }}>
+    <div style={{
+      minHeight: "100vh", background: "#0a0a1a", color: "#fff",
+      fontFamily: "'Inter',-apple-system,sans-serif",
+      display: "flex", justifyContent: "center", padding: "40px 20px",
+    }}>
+      <style>{`
+        input[type=range]::-webkit-slider-thumb {
+          appearance: none; width: 20px; height: 20px; border-radius: 50%;
+          background: #fff; border: 3px solid #7c3aed; cursor: pointer;
+          box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+        }
+      `}</style>
       <div style={{ width: "100%", maxWidth: 880 }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8,
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
             background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.25)",
-            padding: "7px 16px", borderRadius: 50, marginBottom: 20 }}>
+            padding: "7px 16px", borderRadius: 50, marginBottom: 20,
+          }}>
             <div style={{ width: 6, height: 6, background: "#7c3aed", borderRadius: "50%" }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: "#c4b5fd", letterSpacing: 2, textTransform: "uppercase" }}>Free Tool</span>
           </div>
@@ -84,13 +159,20 @@ export default function App() {
           <p style={{ fontSize: 15, color: "#555", marginTop: 12, lineHeight: 1.6 }}>Stop guessing. Know exactly what to charge based on your real numbers.</p>
         </div>
         <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 340px", minWidth: 300, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 32 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: 2, marginBottom: 28 }}>Your Numbers</h2>
-            <Slider label="Desired Annual Income" value={income} onChange={setIncome} min={20000} max={300000} step={5000} prefix="$" help="What you want to take home before tax" />
-            <Slider label="Annual Business Expenses" value={expenses} onChange={setExpenses} min={0} max={60000} step={1000} prefix="$" help="Software, tools, insurance, co-working, etc." />
+          <div style={{
+            flex: "1 1 340px", minWidth: 300,
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 20, padding: 32,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28 }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: 2, margin: 0 }}>Your Numbers</h2>
+              <span style={{ fontSize: 11, color: "#444" }}>click any value to type</span>
+            </div>
+            <Slider label="Desired Annual Income" value={income} onChange={setIncome} min={20000} max={300000} step={5000} prefix="$" help="What you want to take home before tax" inputMin={0} />
+            <Slider label="Annual Business Expenses" value={expenses} onChange={setExpenses} min={0} max={60000} step={1000} prefix="$" help="Software, tools, insurance, co-working, etc." inputMin={0} />
             <Slider label="Vacation Weeks Per Year" value={vacation} onChange={setVacation} min={0} max={12} suffix=" weeks" />
-            <Slider label="Billable Hours" value={billable} onChange={setBillable} min={20} max={90} suffix="%" help="% of work time spent on client work" />
-            <Slider label="Hours Per Week" value={hoursPerWeek} onChange={setHoursPerWeek} min={10} max={60} suffix=" hrs" />
+            <Slider label="Billable Hours" value={billable} onChange={setBillable} min={20} max={90} suffix="%" help="% of work time spent on client work" inputMin={1} />
+            <Slider label="Hours Per Week" value={hoursPerWeek} onChange={setHoursPerWeek} min={10} max={60} suffix=" hrs" inputMin={1} />
           </div>
           <div style={{ flex: "1 1 400px", minWidth: 340 }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
@@ -98,7 +180,10 @@ export default function App() {
               <ResultCard label="Day Rate" value={formatCurrency(calc.daily)} sub={`${hoursPerWeek / 5}hr day`} accent="linear-gradient(135deg, #06b6d4, #22d38a)" />
               <ResultCard label="Monthly Target" value={formatCurrency(calc.monthly)} sub="avg per month" accent="linear-gradient(135deg, #22d38a, #7c3aed)" />
             </div>
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 28, marginBottom: 24 }}>
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 20, padding: 28, marginBottom: 24,
+            }}>
               <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4 }}>
                 <TabBtn id="rates" label="Rate Card" />
                 <TabBtn id="breakdown" label="Time Breakdown" />
@@ -171,16 +256,20 @@ export default function App() {
                 </div>
               )}
             </div>
-            <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1))",
+            <div style={{
+              background: "linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1))",
               border: "1px solid rgba(124,58,237,0.2)", borderRadius: 16, padding: "24px 28px",
-              display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+              display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
+            }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>Want to earn more in fewer hours?</div>
                 <div style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>Get 100 AI prompts built for freelancers. Save 10+ hours every week.</div>
               </div>
-              <a href="https://kovacreations.gumroad.com/l/wxkqcf" style={{ display: "inline-flex", alignItems: "center", gap: 8,
+              <a href="https://kovacreations.gumroad.com/l/wxkqcf" target="_blank" rel="noopener noreferrer" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
                 background: "linear-gradient(135deg, #7c3aed, #06b6d4)", color: "#fff", padding: "12px 24px",
-                borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>
+                borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap",
+              }}>
                 Get the Prompt Guide
               </a>
             </div>
