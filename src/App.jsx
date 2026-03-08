@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 
 const formatCurrency = (n) => {
-  if (n >= 1000) return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (n >= 1000) return "$" + Math.round(n).toLocaleString("en-US");
+  if (n % 1 === 0) return "$" + n.toFixed(0);
   return "$" + n.toFixed(2);
 };
 
@@ -26,7 +27,7 @@ const ResultCard = ({ label, value, sub, accent }) => (
   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: 16, padding: "24px 20px", textAlign: "center", flex: "1 1 140px", minWidth: 140 }}>
     <div style={{ fontSize: 11, fontWeight: 700, color: "#777", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>{label}</div>
-    <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: -2, lineHeight: 1,
+    <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -2, lineHeight: 1,
       background: accent || "linear-gradient(135deg, #7c3aed, #06b6d4)",
       WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{value}</div>
     {sub && <div style={{ fontSize: 11, color: "#555", marginTop: 6 }}>{sub}</div>}
