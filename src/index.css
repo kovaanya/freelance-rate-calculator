@@ -1,0 +1,7 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1a; }
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 3px solid #7c3aed; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+}
